@@ -64,6 +64,8 @@ static void app(void)
       /* something from standard input : i.e keyboard */
       if(FD_ISSET(STDIN_FILENO, &rdfs))
       {
+         
+         
          /* stop process when type on keyboard */
          break;
       }
@@ -78,23 +80,25 @@ static void app(void)
             perror("accept()");
             continue;
          }
-         printf("new client\n");
-
+         printf("test 1"); 
          /* after connecting the client sends its name */
          if(read_client(csock, buffer) == -1)
          {
+            printf("test 2");
             /* disconnected */
             continue;
          }
-         printf("client %s\n",buffer);
-
+         printf("test 3");
          /* what is the new maximum fd ? */
          max = csock > max ? csock : max;
 
          FD_SET(csock, &rdfs);
-
+         
+         display_users(csock, clients, actual); 
+         
          Client c = { csock };
          strncpy(c.name, buffer, BUF_SIZE - 1);
+         printf("buffer : %s ", buffer); 
          clients[actual] = c;
          actual++;
       }
@@ -108,6 +112,7 @@ static void app(void)
             {
                Client client = clients[i];
                int c = read_client(clients[i].sock, buffer);
+               printf("buffer: %s", buffer);
                /* client disconnected */
                if(c == 0)
                {
@@ -119,7 +124,34 @@ static void app(void)
                }
                else
                {
-                  send_message_to_all_clients(clients, client, actual, buffer, 0);
+                  printf("bufffer afficher"); 
+                  if(buffer[0] == 'p'){
+                     // get the messqge if command is .. 
+         // qfficher les users 
+         // il choisi (get the socket of the destination)
+         // envoyer messqge privee (write for a single client. )
+         // 
+                     display_users(clients[i].sock, clients, actual);
+                     write_client(clients[i].sock, "choisis le user a qui tu vas parler\n");
+                     char clientchar[44];
+                     int clientNUM; 
+                     read_client(clients[i].sock, clientchar);
+                     clientNUM = atoi(clientchar); 
+                     char message [255] ; 
+                     strcat(message, "conversation avec "); 
+                     strcat(message, clients[clientNUM].name); 
+                     write_client(clients[i].sock, message);
+                     read_client(clients[i].sock, buffer);
+                     while(!(buffer[0] == 'q')){
+                        write_client(clients[clientNUM].sock, buffer); 
+                        read_client(clients[i].sock, buffer);
+                     }
+                     write_client(clients[clientNUM].sock, "fin conversation");
+                     write_client(clients[i].sock, "fin conversation");
+                  } else {
+                     send_message_to_all_clients(clients, client, actual, buffer, 0);
+                  }
+                  
                }
                break;
             }
@@ -228,6 +260,14 @@ static void write_client(SOCKET sock, const char *buffer)
       exit(errno);
    }
 }
+
+static void display_users(SOCKET sock, Client* clients, int actual){
+   printf("listes des clients connectes\n"); 
+   for(int i = 0; i < actual; i++){
+      write_client(sock, clients[i].name); 
+   }
+}
+
 
 int main(int argc, char **argv)
 {
