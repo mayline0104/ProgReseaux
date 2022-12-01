@@ -174,9 +174,7 @@ static void app(void)
                         send_message_to_one_friend(clients, name, client, actual, message, 0);
                      } else {
                         if(buffer[0] == '/') {
-                           char *command = NULL; 
-                           // move this to declarations 
-                            
+                           char *command = NULL;                             
                            command = (char *) malloc(COMMAND_SIZE * sizeof(char));
                            strncpy(command, buffer, COMMAND_SIZE); 
                            if(strncmp(command, "create",COMMAND_SIZE)){
@@ -184,15 +182,16 @@ static void app(void)
                               int j = 0;
                               for(j = 1; j < BUF_SIZE && buffer[j] != ' '; j++)
                                {}
-                               message = malloc(GROUP_NAME_SIZE); 
+                               message = (char *) malloc(GROUP_NAME_SIZE * sizeof(char)); 
                                strncpy(message, buffer + j + 1, GROUP_NAME_SIZE); 
                                create_group(groups, message, pactualGroup);
                                free(message); 
-                               message = malloc(BUF_SIZE);
+                               message = (char *) malloc(BUF_SIZE * sizeof(char));
                                sprintf(message, "group: %s is created successfully", groups[*pactualGroup - 1].name);   
                                write_client(clients[i].sock, message);
                                free(message);
                            }
+                           free(command); 
                         }
                         else {
                          send_message_to_all_clients(clients, client, actual, buffer, 0);
