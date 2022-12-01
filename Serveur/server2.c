@@ -174,21 +174,24 @@ static void app(void)
                         send_message_to_one_friend(clients, name, client, actual, message, 0);
                      } else {
                         if(buffer[0] == '/') {
-                           char command[BUF_SIZE];
-                           int j = 0;
-                           for(j = 1; j < BUF_SIZE && buffer[j] != ' '; j++)
-                           {
-                              command[j - 1] = buffer[j];
-                           }
-                           command[j - 1] = '\0'; 
-                           if(strcmp(command, "create")){
-                              char message[BUF_SIZE];
-                              for(j = j + 1; j < BUF_SIZE; j++)
-                              {
-                                 message[j - (strlen(command) + 2)] = buffer[j];
-                              }
-                              message[j - (strlen(command) + 2)] = 0;
-                              create_group(groups, message, pactualGroup); 
+                           char *command = NULL; 
+                           // move this to declarations 
+                            
+                           command = (char *) malloc(COMMAND_SIZE * sizeof(char));
+                           strncpy(command, buffer, COMMAND_SIZE); 
+                           if(strncmp(command, "create",COMMAND_SIZE)){
+                              char *message = NULL;
+                              int j = 0;
+                              for(j = 1; j < BUF_SIZE && buffer[j] != ' '; j++)
+                               {}
+                               message = malloc(GROUP_NAME_SIZE); 
+                               strncpy(message, buffer + j + 1, GROUP_NAME_SIZE); 
+                               create_group(groups, message, pactualGroup);
+                               free(message); 
+                               message = malloc(BUF_SIZE);
+                               sprintf(message, "group: %s is created successfully", groups[*pactualGroup - 1].name);   
+                               write_client(clients[i].sock, message);
+                               free(message);
                            }
                         }
                         else {
@@ -337,10 +340,11 @@ static void display_users(SOCKET sock, Client* clients, int actual){
 
 static void create_group(Group *groups, char *name, int *pactualGroup){
    Client subscribers[MAX_CLIENTS];  
-   Group groupCreated = {subscribers, name}; 
+   Group groupCreated = {subscribers}; 
+   strncpy(groupCreated.name, name, GROUP_NAME_SIZE);
    groups[*pactualGroup] = groupCreated; 
    ++ *pactualGroup; 
-   printf("Group %s created successfully.", groupCreated.name); 
+   printf("Group %s created successfully.", groupCreated.name);
 }
 
 int main(int argc, char **argv)

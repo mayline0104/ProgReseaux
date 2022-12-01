@@ -33,13 +33,15 @@ typedef struct in_addr IN_ADDR;
 #define MAX_GROUPS 10
 
 #define BUF_SIZE    1024
+#define GROUP_NAME_SIZE 10
+#define COMMAND_SIZE 7
 
 #include "client2.h"
 
 typedef struct
 {
    Client subscribers[MAX_CLIENTS];
-   char name[BUF_SIZE];
+   char name[GROUP_NAME_SIZE];
 }Group;
 
 static void init(void);
