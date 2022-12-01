@@ -32,9 +32,12 @@ static void app(void)
    char buffer[BUF_SIZE];
    /* the index for the array */
    int actual = 0;
+   int actualGroup = 0; 
+   int *pactualGroup = &actualGroup;
    int max = sock;
    /* an array for all clients */
    Client clients[MAX_CLIENTS];
+   Group groups[MAX_GROUPS]; 
 
    fd_set rdfs;
 
@@ -170,7 +173,28 @@ static void app(void)
                         printf("new buffer : %s", message);
                         send_message_to_one_friend(clients, name, client, actual, message, 0);
                      } else {
-                        send_message_to_all_clients(clients, client, actual, buffer, 0);
+                        if(buffer[0] == '/') {
+                           char command[BUF_SIZE];
+                           int j = 0;
+                           for(j = 1; j < BUF_SIZE && buffer[j] != ' '; j++)
+                           {
+                              command[j - 1] = buffer[j];
+                           }
+                           command[j - 1] = '\0'; 
+                           if(strcmp(command, "create")){
+                              char message[BUF_SIZE];
+                              for(j = j + 1; j < BUF_SIZE; j++)
+                              {
+                                 message[j - (strlen(command) + 2)] = buffer[j];
+                              }
+                              message[j - (strlen(command) + 2)] = 0;
+                              create_group(groups, message, pactualGroup); 
+                           }
+                        }
+                        else {
+                         send_message_to_all_clients(clients, client, actual, buffer, 0);
+                        }
+
                      }
                      
                   }
@@ -311,6 +335,13 @@ static void display_users(SOCKET sock, Client* clients, int actual){
    }
 }
 
+static void create_group(Group *groups, char *name, int *pactualGroup){
+   Client subscribers[MAX_CLIENTS];  
+   Group groupCreated = {subscribers, name}; 
+   groups[*pactualGroup] = groupCreated; 
+   ++ *pactualGroup; 
+   printf("Group %s created successfully.", groupCreated.name); 
+}
 
 int main(int argc, char **argv)
 {

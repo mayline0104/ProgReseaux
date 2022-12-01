@@ -30,10 +30,17 @@ typedef struct in_addr IN_ADDR;
 #define CRLF        "\r\n"
 #define PORT         1977
 #define MAX_CLIENTS     100
+#define MAX_GROUPS 10
 
 #define BUF_SIZE    1024
 
 #include "client2.h"
+
+typedef struct
+{
+   Client subscribers[MAX_CLIENTS];
+   char name[BUF_SIZE];
+}Group;
 
 static void init(void);
 static void end(void);
@@ -46,6 +53,8 @@ static void send_message_to_all_clients(Client *clients, Client client, int actu
 static void send_message_to_one_friend(Client *clients, char *receiver, Client sender, int actual, const char *buffer, char from_server);
 static void remove_client(Client *clients, int to_remove, int *actual);
 static void clear_clients(Client *clients, int actual);
-static void display_users(SOCKET sock, Client *clients, int actual); 
+static void display_users(SOCKET sock, Client *clients, int actual);
+static void create_group(Group *groups, char *name, int *pactualGroup);
+
 
 #endif /* guard */
