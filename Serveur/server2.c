@@ -331,11 +331,12 @@ static void send_message_to_all_clients(Client *clients, Client sender, int actu
       /* we don't send message to the sender */
       if(sender.sock != clients[i].sock)
       {
+         char *date = date_heure();
+         strncpy(message, date, BUF_SIZE - 1);
+         free(date);
+         
          if(from_server == 0)
          {
-            char *date = date_heure();
-            strncpy(message, date, BUF_SIZE - 1);
-            free(date);
             strncat(message, sender.name, sizeof message - strlen(message) - 1);
             strncat(message, " : ", sizeof message - strlen(message) - 1);
          }
