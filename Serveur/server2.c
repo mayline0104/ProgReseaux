@@ -205,6 +205,20 @@ static void app(void)
                               write_client(clients[i].sock, message); 
                               free(message); 
                            }
+                           else if(!strncmp(command, "/leave",COMMAND_SIZE - 1)) {
+                              char groupName[GROUP_NAME_SIZE]; 
+                              int j = 0;
+                              for(j = 1; j < BUF_SIZE && buffer[j] != ' '; j++)
+                               {}
+                              strncpy(groupName, buffer + j + 1, GROUP_NAME_SIZE);
+                              Client *pClient = &(clients[i]);
+                              // static void leave_group(Group *groups, char *name, Client *pclient)
+                              leave_group(groups, groupName, pClient); 
+                              char *message = (char *) malloc(BUF_SIZE * sizeof(char));
+                              sprintf(message, "left group: %s successfully", groupName);
+                              write_client(clients[i].sock, message); 
+                              free(message);
+                           }
                            free(command); 
                         }
                         else {
@@ -356,22 +370,45 @@ static void create_group(Group *groups, char *name, int *pactualGroup){
    Group groupCreated = {subscribers}; 
    strncpy(groupCreated.name, name, GROUP_NAME_SIZE);
    groupCreated.subscribers_count = 0; 
-   groups[*pactualGroup] = groupCreated; 
-   ++ *pactualGroup; 
+   groups[*pactualGroup] = groupCreated;
+   *pactualGroup = *pactualGroup + 1;  
    printf("Group %s created successfully.", groupCreated.name);
 }
-
-//TODO: add the function definition to the server2.h 
 static void join_group(Group *groups, char *name, Client *client){
    for(int i = 0; i < MAX_GROUPS; i++) {
       if(!strcmp(groups[i].name, name)) {
          int *pindex = &groups[i].subscribers_count; 
          Client *psubscriber = &groups[i].subscribers[*pindex]; 
-         strcpy(psubscriber->name,client->name );
+         strcpy(psubscriber->name,client->name);
          psubscriber->sock = client->sock; 
-         ++ *pindex; 
+         *pindex = *pindex + 1; 
       }
    }
+}
+// TODO add declaration to server2.h
+static void leave_group(Group *groups, char *name, Client *pclient){
+ 
+   for(int i=0; i< MAX_GROUPS; i++) {
+      if(!strcmp(groups[i].name, name)){
+           // find elem to remove
+           int *pindex = &groups[i].subscribers_count; 
+           int indexSub = NULL; 
+           for(int j=0; j < MAX_CLIENTS; j++){
+            if(pclient->sock == groups[i].subscribers[j].sock) {
+               indexSub = j; 
+               break; 
+            }
+           }
+            // move elements on top of removed ele to left until we get a soc = 0 
+           for(int j= indexSub; j < MAX_CLIENTS - 1; j++) {
+            groups[i].subscribers[j] = groups[i].subscribers[j+1];
+                        if(groups[i].subscribers[j+1].sock == 0) 
+               break;  
+           }
+           *pindex = *pindex - 1; 
+      }
+   }
+  
 }
 
 int main(int argc, char **argv)
