@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <time.h>
 
 #include "server2.h"
 #include "client2.h"
@@ -100,6 +101,25 @@ static void app(void)
          display_users(csock, clients, actual); 
          
          Client c = { csock };
+         int exist = 0;
+         //check if buffer already exists in the array
+         for(int i=0; i<actual; i++){
+            if(strcmp(clients[i].name, buffer) == 0){
+               exist = 1;
+            }
+         }
+         while (exist == 1){
+            printf("test 4");
+            //if it does, ask for a new name
+            write_client(csock, "This name already exists, please choose another one: ");
+            read_client(csock, buffer);
+            exist = 0;
+            for(int i=0; i<actual; i++){
+            if(strcmp(clients[i].name, buffer) == 0){
+               exist = 1;
+            }
+         }
+         }
          strncpy(c.name, buffer, BUF_SIZE - 1);
          printf("buffer : %s ", buffer); 
          clients[actual] = c;
@@ -129,12 +149,7 @@ static void app(void)
                {
                   printf("bufffer afficher"); 
                   printf(buffer);
-                  if(buffer[0] == 'p'){
-                     // get the messqge if command is .. 
-         // qfficher les users 
-         // il choisi (get the socket of the destination)
-         // envoyer messqge privee (write for a single client. )
-         // 
+                  if(buffer[0] == 'p'){    
                      display_users(clients[i].sock, clients, actual);
                      write_client(clients[i].sock, "choisis le user a qui tu vas parler\n");
                      char clientchar[44];
@@ -169,7 +184,6 @@ static void app(void)
                            message[j - (strlen(name) + 2)] = buffer[j];
                         }
                         message[j - (strlen(name) + 2)] = 0;
-                        
                         printf("new buffer : %s", message);
                         send_message_to_one_friend(clients, name, client, actual, message, 0);
                      } else {
@@ -244,6 +258,8 @@ static void app(void)
                               
                               Client *pClient = &(clients[i]);
                               strcpy(message, buffer + j + 1 + strlen(groupName) + 1);
+                              //add_message(messages, clients[i], message, groupName, actualMessage);
+                              //actualMessage++;
                               char *messageToSend = malloc(BUF_SIZE * sizeof(char)); 
                               sprintf(messageToSend, "[group: %s] %s: %s", groupName, clients[i].name, message); 
                               for(int k = 0; k < MAX_GROUPS; k++){
@@ -297,8 +313,10 @@ static void app(void)
                               delete_group(groups, groupName, clients[i]);
                            }
                            free(command); 
-                        }
-                        else {
+                        } else if(buffer[0] == '!') {
+                              //display_messages(messages, clients[i], actualMessage);
+
+                        } else {
                          send_message_to_all_clients(clients, client, actual, buffer, 0);
                         }
 
@@ -310,6 +328,7 @@ static void app(void)
                break;
             }
          }
+         
       }
    }
 
@@ -346,7 +365,10 @@ static void send_message_to_all_clients(Client *clients, Client sender, int actu
       {
          if(from_server == 0)
          {
-            strncpy(message, sender.name, BUF_SIZE - 1);
+            char *date = date_heure();
+            strncpy(message, date, BUF_SIZE - 1);
+            free(date);
+            strncat(message, sender.name, sizeof message - strlen(message) - 1);
             strncat(message, " : ", sizeof message - strlen(message) - 1);
          }
          strncat(message, buffer, sizeof message - strlen(message) - 1);
@@ -366,7 +388,10 @@ static void send_message_to_one_friend(Client *clients, char *receiver, Client s
       {
          if(from_server == 0)
          {
-            strncpy(message, sender.name, BUF_SIZE - 1);
+            char *date = date_heure();
+            strncpy(message, date, BUF_SIZE - 1);
+            free(date);
+            strncat(message, sender.name, sizeof message - strlen(message) - 1);
             strncat(message, " : ", sizeof message - strlen(message) - 1);
          }
          strncat(message, buffer, sizeof message - strlen(message) - 1);
@@ -489,9 +514,24 @@ static void leave_group(Group *groups, char *name, Client *pclient){
            }
            *pindex = *pindex - 1; 
       }
-   }
-  
+   }      
 }
+static char *date_heure() {
+   int h, min, day, mois, an;
+   time_t now;
+   // Renvoie l'heure actuelle
+   time(&now);
+   struct tm *local = localtime(&now);
+   h = local->tm_hour;        
+   min = local->tm_min;       
+   day = local->tm_mday;          
+   mois = local->tm_mon + 1;     
+   an = local->tm_year + 1900;  
+   char *date = malloc(100);
+   sprintf(date, "%02d/%02d/%d %02d:%02d ", day, mois, an, h, min);
+   return date;
+}
+
 
 static void leave_all_groups(Group *groups, Client *pclient){
  
