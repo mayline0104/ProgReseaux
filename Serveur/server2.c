@@ -275,6 +275,9 @@ static void app(void)
                               }
                               free(message); 
                            }
+                           else if(!strncmp(command, "/users", COMMAND_SIZE)){
+                              display_users(clients[i].sock, clients, actual); 
+                           }
                            free(command); 
                         }
                         else {
@@ -415,10 +418,14 @@ static void write_client(SOCKET sock, const char *buffer)
 }
 
 static void display_users(SOCKET sock, Client* clients, int actual){
-   printf("listes des clients connectes\n"); 
+   printf("listes des clients connectes\n");
+   char *message; 
+   message = malloc(BUF_SIZE * sizeof(char));  
    for(int i = 0; i < actual; i++){
-      write_client(sock, clients[i].name); 
+      sprintf(message, "-%s. \n", clients[i].name); 
+      write_client(sock,message); 
    }
+   free(message); 
 }
 
 static void create_group(Group *groups, char *name, int *pactualGroup){
