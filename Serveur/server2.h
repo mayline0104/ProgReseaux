@@ -30,10 +30,20 @@ typedef struct in_addr IN_ADDR;
 #define CRLF        "\r\n"
 #define PORT         1977
 #define MAX_CLIENTS     100
+#define MAX_GROUPS 10
 
 #define BUF_SIZE    1024
+#define GROUP_NAME_SIZE 10
+#define COMMAND_SIZE 7
 
 #include "client2.h"
+
+typedef struct
+{
+   Client subscribers[MAX_CLIENTS];
+   char name[GROUP_NAME_SIZE];
+   int subscribers_count; 
+}Group;
 
 static void init(void);
 static void end(void);
@@ -48,5 +58,9 @@ static void remove_client(Client *clients, int to_remove, int *actual);
 static void clear_clients(Client *clients, int actual);
 static void display_users(SOCKET sock, Client *clients, int actual); 
 static char *date_heure(void);
+static void create_group(Group *groups, char *name, int *pactualGroup);
+static void join_group(Group *groups, char* name, Client *pclient);
+static void leave_group(Group *groups, char *name, Client *pclient);
+
 
 #endif /* guard */

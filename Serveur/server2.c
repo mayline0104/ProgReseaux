@@ -33,9 +33,12 @@ static void app(void)
    char buffer[BUF_SIZE];
    /* the index for the array */
    int actual = 0;
+   int actualGroup = 0; 
+   int *pactualGroup = &actualGroup;
    int max = sock;
    /* an array for all clients */
    Client clients[MAX_CLIENTS];
+   Group groups[MAX_GROUPS]; 
 
    fd_set rdfs;
 
@@ -171,7 +174,85 @@ static void app(void)
                         printf("new buffer : %s", message);
                         send_message_to_one_friend(clients, name, client, actual, message, 0);
                      } else {
-                        send_message_to_all_clients(clients, client, actual, buffer, 0);
+                        if(buffer[0] == '/') {
+                           char *command = NULL;                             
+                           command = (char *) malloc(COMMAND_SIZE * sizeof(char));
+                           strncpy(command, buffer, COMMAND_SIZE); 
+                           if(!strncmp(command, "/create",COMMAND_SIZE)){
+                              char *message = NULL;
+                              int j = 0;
+                              for(j = 1; j < BUF_SIZE && buffer[j] != ' '; j++)
+                               {}
+                               message = (char *) malloc(GROUP_NAME_SIZE * sizeof(char)); 
+                               strncpy(message, buffer + j + 1, GROUP_NAME_SIZE); 
+                               create_group(groups, message, pactualGroup);
+                               free(message); 
+                               message = (char *) malloc(BUF_SIZE * sizeof(char));
+                               sprintf(message, "group: %s is created successfully", groups[*pactualGroup - 1].name);   
+                               write_client(clients[i].sock, message);
+                               free(message);
+                           }
+                           else if(!strncmp(command, "/join",COMMAND_SIZE - 2)){
+                              char groupName[GROUP_NAME_SIZE]; 
+                              int j = 0;
+                              for(j = 1; j < BUF_SIZE && buffer[j] != ' '; j++)
+                               {}
+                              strncpy(groupName, buffer + j + 1, GROUP_NAME_SIZE);
+                              Client *pClient = &(clients[i]);
+                              // static void join_group(Group *groups, char* name, Client *pclient)  
+                              join_group(groups, groupName, pClient);
+                              char *message = (char *) malloc(BUF_SIZE * sizeof(char));
+                              sprintf(message, "joined group: %s successfully", groupName);
+                              write_client(clients[i].sock, message); 
+                              free(message); 
+                           }
+                           else if(!strncmp(command, "/leave",COMMAND_SIZE - 1)) {
+                              char groupName[GROUP_NAME_SIZE]; 
+                              int j = 0;
+                              for(j = 1; j < BUF_SIZE && buffer[j] != ' '; j++)
+                               {}
+                              strncpy(groupName, buffer + j + 1, GROUP_NAME_SIZE);
+                              Client *pClient = &(clients[i]);
+                              // static void leave_group(Group *groups, char *name, Client *pclient)
+                              leave_group(groups, groupName, pClient); 
+                              char *message = (char *) malloc(BUF_SIZE * sizeof(char));
+                              sprintf(message, "left group: %s successfully", groupName);
+                              write_client(clients[i].sock, message); 
+                              free(message);
+                           }
+                           else if(!strncmp(command, "/send", COMMAND_SIZE - 2)) {
+                              char groupName[GROUP_NAME_SIZE]; 
+                              char message[BUF_SIZE]; 
+                              int j = 0;
+                              for(j = 1; j < BUF_SIZE && buffer[j] != ' '; j++)
+                               {}
+                              strncpy(groupName, buffer + j + 1, GROUP_NAME_SIZE);
+                              for(int k = 0; k < GROUP_NAME_SIZE ; k++) {
+                                 if(groupName[k] == ' '){
+                                    groupName[k] = '\0';
+                                    break;  
+                                 }
+                              }
+                              
+                              Client *pClient = &(clients[i]);
+                              strcpy(message, buffer + j + 1 + strlen(groupName) + 1);
+                              char *messageToSend = malloc(BUF_SIZE * sizeof(char)); 
+                              sprintf(messageToSend, "[group: %s] %s: %s", groupName, clients[i].name, message); 
+                              for(int k = 0; k < MAX_GROUPS; k++){
+                                 if(!strcmp(groups[k].name, groupName)){
+                                    // TODO: Problem, joining late doesn't work. 
+                                    send_message_to_all_clients(groups[k].subscribers, clients[i], groups[k].subscribers_count, messageToSend, 1); 
+                                    break; 
+                                 }
+                              }
+                              free(messageToSend); 
+                           }
+                           free(command); 
+                        }
+                        else {
+                         send_message_to_all_clients(clients, client, actual, buffer, 0);
+                        }
+
                      }
                      
                   }
@@ -314,10 +395,53 @@ static void display_users(SOCKET sock, Client* clients, int actual){
    }
 }
 
+static void create_group(Group *groups, char *name, int *pactualGroup){
+   Client subscribers[MAX_CLIENTS];  
+   Group groupCreated = {subscribers}; 
+   strncpy(groupCreated.name, name, GROUP_NAME_SIZE);
+   groupCreated.subscribers_count = 0; 
+   groups[*pactualGroup] = groupCreated;
+   *pactualGroup = *pactualGroup + 1;  
+   printf("Group %s created successfully.", groupCreated.name);
+}
+static void join_group(Group *groups, char *name, Client *client){
+   for(int i = 0; i < MAX_GROUPS; i++) {
+      if(!strcmp(groups[i].name, name)) {
+         int *pindex = &groups[i].subscribers_count; 
+         Client *psubscriber = &groups[i].subscribers[*pindex]; 
+         strcpy(psubscriber->name,client->name);
+         psubscriber->sock = client->sock; 
+         *pindex = *pindex + 1; 
+      }
+   }
+}
+// TODO add declaration to server2.h
+static void leave_group(Group *groups, char *name, Client *pclient){
+ 
+   for(int i=0; i< MAX_GROUPS; i++) {
+      if(!strcmp(groups[i].name, name)){
+           // find elem to remove
+           int *pindex = &groups[i].subscribers_count; 
+           int indexSub = NULL; 
+           for(int j=0; j < MAX_CLIENTS; j++){
+            if(pclient->sock == groups[i].subscribers[j].sock) {
+               indexSub = j; 
+               break; 
+            }
+           }
+            // move elements on top of removed ele to left until we get a soc = 0 
+           for(int j= indexSub; j < MAX_CLIENTS - 1; j++) {
+            groups[i].subscribers[j] = groups[i].subscribers[j+1];
+                        if(groups[i].subscribers[j+1].sock == 0) 
+               break;  
+           }
+           *pindex = *pindex - 1; 
+      }
+   }      
+}
 static char *date_heure() {
    int h, min, day, mois, an;
    time_t now;
-      
    // Renvoie l'heure actuelle
    time(&now);
    struct tm *local = localtime(&now);
