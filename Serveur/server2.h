@@ -60,11 +60,11 @@ static void clear_clients(Client *clients, int actual);
 static void display_users(SOCKET sock, Client *clients, int actual); 
 static char *date_heure(void);
 static void create_group(Group *groups, char *name, int *pactualGroup, char *creator);
-static void join_group(Group *groups, char* name, Client *pclient);
-static void leave_group(Group *groups, char *name, Client *pclient);
+static Group *join_group(Group *groups, char* name, Client *pclient);
+static Group *leave_group(Group *groups, char *name, Client *pclient);
 static void save_message(Client *pclient, char *message); 
 static void clear_history_client(Client *pclient);
-static void leave_all_groups(Group *groups, Client *pclient);
+static Group *leave_all_groups(Group *groups, Client *pclient);
 static void delete_group(Group *groups, char *groupName, Client client);
 
 
