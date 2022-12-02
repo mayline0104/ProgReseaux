@@ -38,6 +38,7 @@ static void app(void)
    /* an array for all clients */
    Client clients[MAX_CLIENTS];
    Group groups[MAX_GROUPS]; 
+   FILE *historique; 
 
    fd_set rdfs;
 
@@ -172,6 +173,7 @@ static void app(void)
                         
                         printf("new buffer : %s", message);
                         send_message_to_one_friend(clients, name, client, actual, message, 0);
+                        
                      } else {
                         if(buffer[0] == '/') {
                            char *command = NULL;                             
@@ -202,7 +204,7 @@ static void app(void)
                               join_group(groups, groupName, pClient);
                               char *message = (char *) malloc(BUF_SIZE * sizeof(char));
                               sprintf(message, "joined group: %s successfully", groupName);
-                              write_client(clients[i].sock, message); 
+                              write_client(clients[i].sock, message);
                               free(message); 
                            }
                            else if(!strncmp(command, "/leave",COMMAND_SIZE - 1)) {
@@ -239,8 +241,8 @@ static void app(void)
                               sprintf(messageToSend, "[group: %s] %s: %s", groupName, clients[i].name, message); 
                               for(int k = 0; k < MAX_GROUPS; k++){
                                  if(!strcmp(groups[k].name, groupName)){
-                                    // TODO: Problem, joining late doesn't work. 
                                     send_message_to_all_clients(groups[k].subscribers, clients[i], groups[k].subscribers_count, messageToSend, 1); 
+                                    
                                     break; 
                                  }
                               }
@@ -277,6 +279,9 @@ static void app(void)
                            }
                            else if(!strncmp(command, "/users", COMMAND_SIZE)){
                               display_users(clients[i].sock, clients, actual); 
+                           }
+                           else if(!strncmp(command, "/clear", COMMAND_SIZE)){
+                              clear_history_client(&clients[i]); 
                            }
                            free(command); 
                         }
@@ -334,6 +339,7 @@ static void send_message_to_all_clients(Client *clients, Client sender, int actu
          strncat(message, buffer, sizeof message - strlen(message) - 1);
          write_client(clients[i].sock, message);
       }
+      save_message(&clients[i], message); 
    }
 }
 
@@ -353,6 +359,8 @@ static void send_message_to_one_friend(Client *clients, char *receiver, Client s
          }
          strncat(message, buffer, sizeof message - strlen(message) - 1);
          write_client(clients[i].sock, message);
+         save_message(&clients[i], message);
+         save_message(&sender, message); 
       }
    }
 }
@@ -473,6 +481,25 @@ static void leave_group(Group *groups, char *name, Client *pclient){
    }
   
 }
+
+static void save_message(Client *pclient, char *message) {
+   char *nomFichier = malloc(BUF_SIZE * sizeof(char));
+   sprintf(nomFichier, "historique_%s.txt", pclient->name); 
+   pclient->historique = fopen(nomFichier, "a"); 
+   fprintf(pclient->historique, "%s \n", message);
+   free(nomFichier); 
+   fclose(pclient->historique); 
+}
+
+static void clear_history_client(Client *pclient){
+   char *nomFichier = malloc(BUF_SIZE * sizeof(char));
+   sprintf(nomFichier, "historique_%s.txt", pclient->name);
+   pclient->historique = fopen(nomFichier, "w"); 
+   fprintf(pclient->historique, "\0");
+   free(nomFichier); 
+   fclose(pclient->historique); 
+}
+
 
 int main(int argc, char **argv)
 {
