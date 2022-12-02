@@ -184,7 +184,7 @@ static void app(void)
                                {}
                                message = (char *) malloc(GROUP_NAME_SIZE * sizeof(char)); 
                                strncpy(message, buffer + j + 1, GROUP_NAME_SIZE); 
-                               create_group(groups, message, pactualGroup);
+                               create_group(groups, message, pactualGroup, clients[i].name);
                                free(message); 
                                message = (char *) malloc(BUF_SIZE * sizeof(char));
                                sprintf(message, "group: %s is created successfully", groups[*pactualGroup - 1].name);   
@@ -286,6 +286,15 @@ static void app(void)
                            }
                            else if(!strncmp(command, "/users", COMMAND_SIZE)){
                               display_users(clients[i].sock, clients, actual); 
+                           }
+                           else if(!strncmp(command, "/delete", COMMAND_SIZE)){
+                              //delete group
+                              char groupName[GROUP_NAME_SIZE];
+                              int j = 0;
+                              for(j = 1; j < BUF_SIZE && buffer[j] != ' '; j++)
+                               {}
+                              strncpy(groupName, buffer + j + 1, GROUP_NAME_SIZE);
+                              delete_group(groups, groupName, clients[i]);
                            }
                            free(command); 
                         }
@@ -437,15 +446,17 @@ static void display_users(SOCKET sock, Client* clients, int actual){
    free(message); 
 }
 
-static void create_group(Group *groups, char *name, int *pactualGroup){
+static void create_group(Group *groups, char *name, int *pactualGroup, char *creator){
    Client subscribers[MAX_CLIENTS];  
    Group groupCreated = {subscribers}; 
    strncpy(groupCreated.name, name, GROUP_NAME_SIZE);
+   strncpy(groupCreated.creator, creator, MAX_CLIENTS);
    groupCreated.subscribers_count = 0; 
    groups[*pactualGroup] = groupCreated;
    *pactualGroup = *pactualGroup + 1;  
    printf("Group %s created successfully.", groupCreated.name);
 }
+
 static void join_group(Group *groups, char *name, Client *client){
    for(int i = 0; i < MAX_GROUPS; i++) {
       if(!strcmp(groups[i].name, name)) {
@@ -457,7 +468,7 @@ static void join_group(Group *groups, char *name, Client *client){
       }
    }
 }
-// TODO add declaration to server2.h
+
 static void leave_group(Group *groups, char *name, Client *pclient){
    for(int i=0; i< MAX_GROUPS; i++) {
       if(!strcmp(groups[i].name, name)){
@@ -504,6 +515,42 @@ static void leave_all_groups(Group *groups, Client *pclient){
       
    }
   
+}
+
+static void delete_group(Group *groups, char *groupName, Client client) {
+   for(int i=0; i< MAX_GROUPS; i++) {
+      if(!strcmp(groups[i].name, groupName)){
+         if(strcmp(groups[i].creator, client.name)) {
+            char *message = malloc(BUF_SIZE * sizeof(char));
+            sprintf(message, "You can't delete the group: %s. Only the group creator can delete it.", groups[i].name);
+            write_client(client.sock, message);
+            free(message);
+            return;
+         }
+         //parcourir subscribers et les supprimer du groupe
+         for(int j=0; j < MAX_CLIENTS; j++) {
+            if(groups[i].subscribers[j].sock != 0) {
+               leave_group(groups, groupName, &groups[i].subscribers[j]);
+            }
+         }
+
+         for(int j= i; j < MAX_GROUPS - 1; j++) {
+            groups[j] = groups[j+1];
+            if(groups[j+1].subscribers_count == 0) 
+               break;  
+         }
+         char *message = (char *) malloc(BUF_SIZE * sizeof(char));
+         sprintf(message, "group: %s deleted successfully.", groupName);
+         write_client(client.sock, message);
+         free(message);
+         return;
+      }
+   }
+
+   char *message = (char *) malloc(BUF_SIZE * sizeof(char));
+   sprintf(message, "group: %s doesn't exist.", groupName);
+   write_client(client.sock, message);
+   free(message);
 }
 
 int main(int argc, char **argv)
