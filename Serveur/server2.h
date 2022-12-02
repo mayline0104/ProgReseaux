@@ -43,6 +43,7 @@ typedef struct
    Client subscribers[MAX_CLIENTS];
    char name[GROUP_NAME_SIZE];
    int subscribers_count; 
+   char creator[MAX_CLIENTS];
 }Group;
 
 static void init(void);
@@ -58,9 +59,11 @@ static void remove_client(Client *clients, int to_remove, int *actual);
 static void clear_clients(Client *clients, int actual);
 static void display_users(SOCKET sock, Client *clients, int actual); 
 static char *date_heure(void);
-static void create_group(Group *groups, char *name, int *pactualGroup);
+static void create_group(Group *groups, char *name, int *pactualGroup, char *creator);
 static void join_group(Group *groups, char* name, Client *pclient);
 static void leave_group(Group *groups, char *name, Client *pclient);
+static void leave_all_groups(Group *groups, Client *pclient);
+static void delete_group(Group *groups, char *groupName, Client client);
 
 
 #endif /* guard */
