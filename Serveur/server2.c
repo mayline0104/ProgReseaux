@@ -257,7 +257,21 @@ static void app(void)
                                     sprintf(message, "- %s.\n", groups[k].name);
                                     write_client(clients[i].sock, message); 
                                  }
-                                
+                              }
+                              free(message); 
+                           }
+                           else if(!strncmp(command, "/grpin", COMMAND_SIZE)){ 
+                              write_client(clients[i].sock, "all joined groups: \n"); 
+                              // groups -> subscribers -> trouve 
+                              int k =0; 
+                              char *message = malloc(BUF_SIZE * sizeof(char)); 
+                              for(k=0; k < MAX_GROUPS; k++){
+                                 int l =0;
+                                 for(l=0; l < MAX_CLIENTS; l++)
+                                 if(!strcmp(groups[k].subscribers[l].name, clients[i].name)){
+                                    sprintf(message, "- %s.\n", groups[k].name); 
+                                    write_client(clients[i].sock, message); 
+                                 }
                               }
                               free(message); 
                            }
