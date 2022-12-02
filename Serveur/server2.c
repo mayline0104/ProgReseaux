@@ -246,6 +246,21 @@ static void app(void)
                               }
                               free(messageToSend); 
                            }
+                           else if(!strncmp(command, "/all", COMMAND_SIZE -3)) {
+                              write_client(clients[i].sock, "all groups: \n");
+                              char *message= malloc(BUF_SIZE * sizeof(char));
+                              char emptyGroup[GROUP_NAME_SIZE];
+                              strcpy(emptyGroup, "\000\000\000\000\000\000\000\000\000");   
+                              int k = 0;
+                              for(k=0; k < MAX_GROUPS; k++){
+                                 if(strcmp(groups[k].name, emptyGroup)){
+                                    sprintf(message, "- %s.\n", groups[k].name);
+                                    write_client(clients[i].sock, message); 
+                                 }
+                                
+                              }
+                              free(message); 
+                           }
                            free(command); 
                         }
                         else {
