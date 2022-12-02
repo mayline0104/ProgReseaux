@@ -219,6 +219,33 @@ static void app(void)
                               write_client(clients[i].sock, message); 
                               free(message);
                            }
+                           else if(!strncmp(command, "/send", COMMAND_SIZE - 2)) {
+                              char groupName[GROUP_NAME_SIZE]; 
+                              char message[BUF_SIZE]; 
+                              int j = 0;
+                              for(j = 1; j < BUF_SIZE && buffer[j] != ' '; j++)
+                               {}
+                              strncpy(groupName, buffer + j + 1, GROUP_NAME_SIZE);
+                              for(int k = 0; k < GROUP_NAME_SIZE ; k++) {
+                                 if(groupName[k] == ' '){
+                                    groupName[k] = '\0';
+                                    break;  
+                                 }
+                              }
+                              
+                              Client *pClient = &(clients[i]);
+                              strcpy(message, buffer + j + 1 + strlen(groupName) + 1);
+                              char *messageToSend = malloc(BUF_SIZE * sizeof(char)); 
+                              sprintf(messageToSend, "[group: %s] %s: %s", groupName, clients[i].name, message); 
+                              for(int k = 0; k < MAX_GROUPS; k++){
+                                 if(!strcmp(groups[k].name, groupName)){
+                                    // TODO: Problem, joining late doesn't work. 
+                                    send_message_to_all_clients(groups[k].subscribers, clients[i], groups[k].subscribers_count, messageToSend, 1); 
+                                    break; 
+                                 }
+                              }
+                              free(messageToSend); 
+                           }
                            free(command); 
                         }
                         else {
