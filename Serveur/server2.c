@@ -229,7 +229,6 @@ static void app(void)
                                     break;  
                                  }
                               }
-                              
                               Client *pClient = &(clients[i]);
                               strcpy(message, buffer + j + 1 + strlen(groupName) + 1);
                               //add_message(messages, clients[i], message, groupName, actualMessage);
@@ -238,7 +237,13 @@ static void app(void)
                               sprintf(messageToSend, "[group: %s] %s: %s", groupName, clients[i].name, message); 
                               for(int k = 0; k < MAX_GROUPS; k++){
                                  if(!strcmp(groups[k].name, groupName)){
-                                    send_message_to_all_clients(groups[k].subscribers, clients[i], groups[k].subscribers_count, messageToSend, 1); 
+                                    Client *psubscriber = &groups[k].subscribers; 
+                                    for(int l =0; l < MAX_CLIENTS; l++){
+                                       if(!strcmp((psubscriber+l)->name, clients[i].name)){
+                                          send_message_to_all_clients(groups[k].subscribers, clients[i], groups[k].subscribers_count, messageToSend, 1);                                                 
+                                          break; 
+                                       }
+                                    }
                                     
                                     break; 
                                  }
