@@ -60,6 +60,7 @@ static void display_users(SOCKET sock, Client *clients, int actual);
 static void create_group(Group *groups, char *name, int *pactualGroup);
 static void join_group(Group *groups, char* name, Client *pclient);
 static void leave_group(Group *groups, char *name, Client *pclient);
+static void leave_all_groups(Group *groups, Client *pclient);
 
 
 #endif /* guard */

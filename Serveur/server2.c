@@ -213,11 +213,20 @@ static void app(void)
                               strncpy(groupName, buffer + j + 1, GROUP_NAME_SIZE);
                               Client *pClient = &(clients[i]);
                               // static void leave_group(Group *groups, char *name, Client *pclient)
-                              leave_group(groups, groupName, pClient); 
-                              char *message = (char *) malloc(BUF_SIZE * sizeof(char));
-                              sprintf(message, "left group: %s successfully", groupName);
-                              write_client(clients[i].sock, message); 
-                              free(message);
+                              //if there is no group name then leave all groups
+                              if(groupName[0] == '\0') {
+                                 leave_all_groups(groups, pClient);
+                                 char *message = (char *) malloc(BUF_SIZE * sizeof(char));
+                                 sprintf(message, "left all groups successfully");
+                                 write_client(clients[i].sock, message); 
+                                 free(message); 
+                              } else {
+                                 leave_group(groups, groupName, pClient);
+                                 char *message = (char *) malloc(BUF_SIZE * sizeof(char));
+                                 sprintf(message, "left group: %s successfully", groupName);
+                                 write_client(clients[i].sock, message); 
+                                 free(message); 
+                              }
                            }
                            else if(!strncmp(command, "/send", COMMAND_SIZE - 2)) {
                               char groupName[GROUP_NAME_SIZE]; 
@@ -450,7 +459,6 @@ static void join_group(Group *groups, char *name, Client *client){
 }
 // TODO add declaration to server2.h
 static void leave_group(Group *groups, char *name, Client *pclient){
- 
    for(int i=0; i< MAX_GROUPS; i++) {
       if(!strcmp(groups[i].name, name)){
            // find elem to remove
@@ -470,6 +478,30 @@ static void leave_group(Group *groups, char *name, Client *pclient){
            }
            *pindex = *pindex - 1; 
       }
+   }
+  
+}
+
+static void leave_all_groups(Group *groups, Client *pclient){
+ 
+   for(int i=0; i< MAX_GROUPS; i++) {
+           // find elem to remove
+           int *pindex = &groups[i].subscribers_count; 
+           int indexSub = NULL; 
+           for(int j=0; j < MAX_CLIENTS; j++){
+            if(pclient->sock == groups[i].subscribers[j].sock) {
+               indexSub = j; 
+               break; 
+            }
+           }
+            // move elements on top of removed ele to left until we get a soc = 0 
+           for(int j= indexSub; j < MAX_CLIENTS - 1; j++) {
+            groups[i].subscribers[j] = groups[i].subscribers[j+1];
+                        if(groups[i].subscribers[j+1].sock == 0) 
+               break;  
+           }
+           *pindex = *pindex - 1; 
+      
    }
   
 }
