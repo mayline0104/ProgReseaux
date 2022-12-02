@@ -177,7 +177,7 @@ static void app(void)
                            char *command = NULL;                             
                            command = (char *) malloc(COMMAND_SIZE * sizeof(char));
                            strncpy(command, buffer, COMMAND_SIZE); 
-                           if(strncmp(command, "create",COMMAND_SIZE)){
+                           if(!strncmp(command, "/create",COMMAND_SIZE)){
                               char *message = NULL;
                               int j = 0;
                               for(j = 1; j < BUF_SIZE && buffer[j] != ' '; j++)
@@ -190,6 +190,20 @@ static void app(void)
                                sprintf(message, "group: %s is created successfully", groups[*pactualGroup - 1].name);   
                                write_client(clients[i].sock, message);
                                free(message);
+                           }
+                           else if(!strncmp(command, "/join",COMMAND_SIZE - 2)){
+                              char groupName[GROUP_NAME_SIZE]; 
+                              int j = 0;
+                              for(j = 1; j < BUF_SIZE && buffer[j] != ' '; j++)
+                               {}
+                              strncpy(groupName, buffer + j + 1, GROUP_NAME_SIZE);
+                              Client *pClient = &(clients[i]);
+                              // static void join_group(Group *groups, char* name, Client *pclient)  
+                              join_group(groups, groupName, pClient);
+                              char *message = (char *) malloc(BUF_SIZE * sizeof(char));
+                              sprintf(message, "joined group: %s successfully", groupName);
+                              write_client(clients[i].sock, message); 
+                              free(message); 
                            }
                            free(command); 
                         }
@@ -341,9 +355,23 @@ static void create_group(Group *groups, char *name, int *pactualGroup){
    Client subscribers[MAX_CLIENTS];  
    Group groupCreated = {subscribers}; 
    strncpy(groupCreated.name, name, GROUP_NAME_SIZE);
+   groupCreated.subscribers_count = 0; 
    groups[*pactualGroup] = groupCreated; 
    ++ *pactualGroup; 
    printf("Group %s created successfully.", groupCreated.name);
+}
+
+//TODO: add the function definition to the server2.h 
+static void join_group(Group *groups, char *name, Client *client){
+   for(int i = 0; i < MAX_GROUPS; i++) {
+      if(!strcmp(groups[i].name, name)) {
+         int *pindex = &groups[i].subscribers_count; 
+         Client *psubscriber = &groups[i].subscribers[*pindex]; 
+         strcpy(psubscriber->name,client->name );
+         psubscriber->sock = client->sock; 
+         ++ *pindex; 
+      }
+   }
 }
 
 int main(int argc, char **argv)
