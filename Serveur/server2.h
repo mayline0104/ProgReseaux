@@ -47,5 +47,6 @@ static void send_message_to_one_friend(Client *clients, char *receiver, Client s
 static void remove_client(Client *clients, int to_remove, int *actual);
 static void clear_clients(Client *clients, int actual);
 static void display_users(SOCKET sock, Client *clients, int actual); 
+static char *date_heure(void);
 
 #endif /* guard */

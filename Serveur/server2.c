@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <time.h>
 
 #include "server2.h"
 #include "client2.h"
@@ -215,7 +216,8 @@ static void send_message_to_all_clients(Client *clients, Client sender, int actu
       {
          if(from_server == 0)
          {
-            strncpy(message, sender.name, BUF_SIZE - 1);
+            strncpy(message, date_heure(), BUF_SIZE - 1);
+            strncat(message, sender.name, sizeof message - strlen(message) - 1);
             strncat(message, " : ", sizeof message - strlen(message) - 1);
          }
          strncat(message, buffer, sizeof message - strlen(message) - 1);
@@ -235,7 +237,8 @@ static void send_message_to_one_friend(Client *clients, char *receiver, Client s
       {
          if(from_server == 0)
          {
-            strncpy(message, sender.name, BUF_SIZE - 1);
+            strncpy(message, date_heure(), BUF_SIZE - 1);
+            strncat(message, sender.name, sizeof message - strlen(message) - 1);
             strncat(message, " : ", sizeof message - strlen(message) - 1);
          }
          strncat(message, buffer, sizeof message - strlen(message) - 1);
@@ -309,6 +312,23 @@ static void display_users(SOCKET sock, Client* clients, int actual){
    for(int i = 0; i < actual; i++){
       write_client(sock, clients[i].name); 
    }
+}
+
+static char *date_heure() {
+   int h, min, day, mois, an;
+   time_t now;
+      
+   // Renvoie l'heure actuelle
+   time(&now);
+   struct tm *local = localtime(&now);
+   h = local->tm_hour;        
+   min = local->tm_min;       
+   day = local->tm_mday;          
+   mois = local->tm_mon + 1;     
+   an = local->tm_year + 1900;  
+   char *date = malloc(100);
+   sprintf(date, "%02d/%02d/%d %02d:%02d ", day, mois, an, h, min);
+   return date;
 }
 
 
