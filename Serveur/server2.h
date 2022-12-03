@@ -59,7 +59,7 @@ static void remove_client(Client *clients, int to_remove, int *actual);
 static void clear_clients(Client *clients, int actual);
 static void display_users(SOCKET sock, Client *clients, int actual); 
 static char *date_heure(void);
-static void create_group(Group *groups, char *name, int *pactualGroup, char *creator);
+static void create_group(Group *groups, char *name, int *pactualGroup, Client *creator);
 static Group *join_group(Group *groups, char* name, Client *pclient);
 static Group *leave_group(Group *groups, char *name, Client *pclient);
 static void save_message(Client *pclient, char *message); 

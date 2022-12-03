@@ -99,8 +99,6 @@ static void app(void)
 
          FD_SET(csock, &rdfs);
          
-         display_users(csock, clients, actual); 
-         
          Client c = { csock };
          int exist = 0;
          //check if buffer already exists in the array
@@ -125,6 +123,7 @@ static void app(void)
          printf("buffer : %s ", buffer); 
          clients[actual] = c;
          actual++;
+         display_users(csock, clients, actual); 
       }
       else
       {
@@ -200,12 +199,10 @@ static void app(void)
                                {}
                                message = (char *) malloc(GROUP_NAME_SIZE * sizeof(char)); 
                                strncpy(message, buffer + j + 1, GROUP_NAME_SIZE); 
-                               create_group(groups, message, pactualGroup, clients[i].name);
+                               Client *pClient = &(clients[i]);
+                               create_group(groups, message, pactualGroup, pClient);
                                free(message); 
-                               message = (char *) malloc(BUF_SIZE * sizeof(char));
-                               sprintf(message, "group: %s is created successfully", groups[*pactualGroup - 1].name);   
-                               write_client(clients[i].sock, message);
-                               free(message);
+                               
                            }
                            else if(!strncmp(command, "/join",COMMAND_SIZE - 2)){
                               char groupName[GROUP_NAME_SIZE]; 
@@ -251,7 +248,8 @@ static void app(void)
                                     }
                                  }
                                  sprintf(message, "left all groups successfully");
-                                 write_client(clients[i].sock, message); 
+                                 write_client(clients[i].sock, message);
+                                 free(pgroup_list);  
                                  free(message); 
                               } else {
                                  Group *pgroup = leave_group(groups, groupName, pClient);
@@ -503,6 +501,7 @@ static void display_users(SOCKET sock, Client* clients, int actual){
    printf("listes des clients connectes\n");
    char *message; 
    message = malloc(BUF_SIZE * sizeof(char));  
+   write_client(sock, "Liste des clients connectes :\n");
    for(int i = 0; i < actual; i++){
       sprintf(message, "-%s. \n", clients[i].name); 
       write_client(sock,message); 
@@ -510,25 +509,48 @@ static void display_users(SOCKET sock, Client* clients, int actual){
    free(message); 
 }
 
-static void create_group(Group *groups, char *name, int *pactualGroup, char *creator){
+static void create_group(Group *groups, char *name, int *pactualGroup, Client *client){
+   for(int i = 0; i < *pactualGroup; i++){
+      if(strcmp(groups[i].name, name) == 0){
+         char *message = (char *) malloc(BUF_SIZE * sizeof(char));
+         sprintf(message, "Group: %s already exists. \n", name);
+         write_client(client->sock, message);
+         free(message);
+         return; 
+      }
+   }
    Client subscribers[MAX_CLIENTS];  
    Group groupCreated = {subscribers}; 
    strncpy(groupCreated.name, name, GROUP_NAME_SIZE);
-   strncpy(groupCreated.creator, creator, MAX_CLIENTS);
+   strncpy(groupCreated.creator, client->name, MAX_CLIENTS);
    groupCreated.subscribers_count = 0; 
    groups[*pactualGroup] = groupCreated;
    *pactualGroup = *pactualGroup + 1;  
    printf("Group %s created successfully.", groupCreated.name);
+   char *message = (char *) malloc(BUF_SIZE * sizeof(char));
+   sprintf(message, "Group: %s is created successfully", groups[*pactualGroup - 1].name);   
+   write_client(client->sock, message);
+   free(message);
 }
 
 static Group *join_group(Group *groups, char *name, Client *client){
    for(int i = 0; i < MAX_GROUPS; i++) {
       if(!strcmp(groups[i].name, name)) {
+         for(int j = 0; j < groups[i].subscribers_count; j++) {
+            if(!strcmp(groups[i].subscribers[j].name, client->name)) {
+               char *message = (char *) malloc(BUF_SIZE * sizeof(char));
+               sprintf(message, "You are already in group: %s \n", name);
+               write_client(client->sock, message); 
+               free(message); 
+               return; 
+            }
+         }
          int *pindex = &groups[i].subscribers_count; 
          Client *psubscriber = &groups[i].subscribers[*pindex]; 
          strcpy(psubscriber->name,client->name);
          psubscriber->sock = client->sock; 
          *pindex = *pindex + 1; 
+
          return &groups[i]; 
       }
    }
@@ -594,13 +616,14 @@ static void clear_history_client(Client *pclient){
 }
 
 static Group *leave_all_groups(Group *groups, Client *pclient){
-   Group *groupIn[MAX_GROUPS];
+   Group *groupIn = malloc(MAX_GROUPS * sizeof(Group));
+   // Group *groupIn[MAX_GROUPS]; 
    int index = 0;  
    for(int i=0; i< MAX_GROUPS; i++) {
       int l = 0; 
       for(l=0; l < MAX_CLIENTS; l++)
          if(!strcmp(groups[i].subscribers[l].name, pclient->name)){
-            groupIn[index++] = leave_group(groups, groups[i].name, pclient); 
+            groupIn[index++] = *leave_group(groups, groups[i].name, pclient); 
          }
    }
   return groupIn; 
