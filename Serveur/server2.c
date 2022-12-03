@@ -345,6 +345,10 @@ static void app(void)
                               strncpy(groupName, buffer + j + 1, GROUP_NAME_SIZE);
                               delete_group(groups, groupName, clients[i]);
                            }
+                           else if(!strncmp(command, "/history", COMMAND_SIZE)){
+                              show_history_client(&clients[i]);
+
+                           }
                            free(command); 
                         } else if(buffer[0] == '!') {
                               //display_messages(messages, clients[i], actualMessage);
@@ -604,6 +608,28 @@ static void save_message(Client *pclient, char *message) {
    fprintf(pclient->historique, "%s \n", message);
    free(nomFichier); 
    fclose(pclient->historique); 
+}
+
+static void show_history_client(Client *pclient){
+   char * line = NULL;
+   size_t len = 0;
+   ssize_t read;
+   char *nomFichier = malloc(BUF_SIZE * sizeof(char));
+   sprintf(nomFichier, "historique_%s.txt", pclient->name); 
+   pclient->historique = fopen(nomFichier, "r");
+   if(pclient->historique == NULL) {
+      clear_history_client(pclient);
+      pclient->historique = fopen(nomFichier, "r");
+   }
+   write_client(pclient->sock, "votre historique: \n"); 
+    while ((read = getline(&line, &len, pclient->historique)) != -1) {
+        strcat(line, "\n"); 
+        write_client(pclient->sock, line);
+    }
+
+    fclose(pclient->historique);
+    if (line)
+        free(line);
 }
 
 static void clear_history_client(Client *pclient){

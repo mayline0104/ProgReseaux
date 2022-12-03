@@ -66,6 +66,6 @@ static void save_message(Client *pclient, char *message);
 static void clear_history_client(Client *pclient);
 static Group *leave_all_groups(Group *groups, Client *pclient);
 static void delete_group(Group *groups, char *groupName, Client client);
-
+static void show_history_client(Client *pclient); 
 
 #endif /* guard */
