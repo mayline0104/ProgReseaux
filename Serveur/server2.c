@@ -235,19 +235,19 @@ static void app(void)
                               Client *pClient = &(clients[i]);
                               // static void leave_group(Group *groups, char *name, Client *pclient)
                               //if there is no group name then leave all groups
-                              if(groupName[0] == '\0') 
+                              if(!strcmp(command,"/leave")) 
                               {
                                  Group *pgroup_list = leave_all_groups(groups, pClient);
                                  char *message = (char *) malloc(BUF_SIZE * sizeof(char));
                                  for(int k = 0; k < MAX_GROUPS; k++){
                                     if(strcmp(pgroup_list[k].name, "\0") ){
-                                       sprintf(message, "left group: %s successfully", pgroup_list[k].name);
+                                       sprintf(message, "left group: %s successfully\n", pgroup_list[k].name);
                                        write_client(clients[i].sock, message);
-                                       sprintf(message, "[group: %s] %s: [left group]", pgroup_list[k].name, clients[i].name);
+                                       sprintf(message, "[group: %s] %s: [left group]\n", pgroup_list[k].name, clients[i].name);
                                        send_message_to_all_clients( pgroup_list[k].subscribers, clients[i],  pgroup_list[k].subscribers_count, message, 1);
                                     }
                                  }
-                                 sprintf(message, "left all groups successfully");
+                                 sprintf(message, "left all groups successfully\n");
                                  write_client(clients[i].sock, message);
                                  free(pgroup_list);  
                                  free(message); 
@@ -420,6 +420,7 @@ static void send_message_to_all_clients(Client *clients, Client sender, int actu
       }
       save_message(&clients[i], message); 
    }
+   save_message(&sender, message); 
 }
 
 static void send_message_to_one_friend(Client *clients, char *receiver, Client sender, int actual, const char *buffer, char from_server)
