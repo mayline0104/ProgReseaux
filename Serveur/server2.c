@@ -349,6 +349,12 @@ static void app(void)
                               show_history_client(&clients[i]);
 
                            }
+                           else if(!strncmp(command, "/help", COMMAND_SIZE)){
+                              char *message= malloc(BUF_SIZE * sizeof(char));
+                              sprintf(message, "List of commands: \n - /all: list all groups \n - /grpin: list all groups you are in \n - /users: list all users \n - /clear: clear your history \n - /history: show your history \n - /help: show this message \n - /create [group name]: create the group [group name] \n - /delete [group name]: delete the group [group name] \n - /join [group name]: join the group [group name] \n - /leave [group name]: leave the group [group name] \n - /leave: leave all groups \n - /send [group name] [message]: send [message] to the group [group name] \n - @ [user name] [message]: send [message] to the user [user name] \n - [message]: send [message] to everyone \n");
+                              write_client(clients[i].sock, message);
+                              free(message);
+                           }
                            free(command); 
                         } else if(buffer[0] == '!') {
                               //display_messages(messages, clients[i], actualMessage);
