@@ -1,7 +1,7 @@
 CC = gcc
 PROGS = client2 server2
 
-CFLAGS = -g -Wall -Werror -Wextra -pedantic -std=c99
+CFLAGS = -g 
 
 SRC = Client/client2.c Serveur/server2.c
 GFILES = client2.h server2.h
