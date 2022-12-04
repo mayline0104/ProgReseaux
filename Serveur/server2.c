@@ -219,7 +219,7 @@ static void app(void)
                            strncpy(groupName, buffer + j + 1, GROUP_NAME_SIZE);
                            Client *pClient = &(clients[i]);
                            // if there is no group name then leave all groups
-                           if (groupName[0] == '\0')
+                           if (!strcmp(groupName, "all"))
                            {
                               Group *pgroup_list = leave_all_groups(groups, pClient);
                               char *message = (char *)malloc(BUF_SIZE * sizeof(char));
@@ -319,7 +319,7 @@ static void app(void)
                         // display all groups
                         else if (!strncmp(command, "/all", COMMAND_SIZE - 3))
                         {
-                           write_client(clients[i].sock, "all groups: \n");
+                           write_client(clients[i].sock, "List of the groups (the ones you are in are in yellow): \n");
                            char *message = malloc(BUF_SIZE * sizeof(char));
                            char emptyGroup[GROUP_NAME_SIZE];
                            strcpy(emptyGroup, "\000\000\000\000\000\000\000\000\000");
@@ -328,8 +328,23 @@ static void app(void)
                            {
                               if (strcmp(groups[k].name, emptyGroup))
                               {
-                                 sprintf(message, "- %s.\n", groups[k].name);
-                                 write_client(clients[i].sock, message);
+                                 int in = 0;
+                                 for (int l = 0; l < MAX_CLIENTS; l++)
+                                 {
+                                    if (!strcmp(clients[i].name, groups[k].subscribers[l].name))
+                                    {
+                                       in = 1;
+                                       break;
+                                    }
+                                 }
+                                 if (in == 1)
+                                 {
+                                    sprintf(message, YELLOW"- %s.\n"NORMAL, groups[k].name);
+                                    write_client(clients[i].sock, message);
+                                 } else {
+                                    sprintf(message, "- %s.\n", groups[k].name);
+                                    write_client(clients[i].sock, message);
+                                 }
                               }
                            }
                            free(message);
@@ -337,7 +352,7 @@ static void app(void)
                         // display all groups joined
                         else if (!strncmp(command, "/grpin", COMMAND_SIZE))
                         {
-                           write_client(clients[i].sock, "all joined groups: \n");
+                           write_client(clients[i].sock, "List of the groups you are in: \n");
                            int k = 0;
                            char *message = malloc(BUF_SIZE * sizeof(char));
                            for (k = 0; k < MAX_GROUPS; k++)
@@ -346,7 +361,7 @@ static void app(void)
                               for (l = 0; l < MAX_CLIENTS; l++)
                                  if (!strcmp(groups[k].subscribers[l].name, clients[i].name))
                                  {
-                                    sprintf(message, "- %s.\n", groups[k].name);
+                                    sprintf(message, YELLOW"- %s.\n"NORMAL, groups[k].name);
                                     write_client(clients[i].sock, message);
                                  }
                            }
@@ -371,7 +386,9 @@ static void app(void)
                            {
                            }
                            strncpy(groupName, buffer + j + 1, GROUP_NAME_SIZE);
-                           delete_group(groups, groupName, clients[i]);
+                           if(delete_group(groups, groupName, clients[i])==0) {
+                              actualGroup--;
+                           }
                         }
                         // display the clients' history
                         else if (!strncmp(command, "/history", COMMAND_SIZE))
@@ -382,7 +399,7 @@ static void app(void)
                         else if (!strncmp(command, "/help", COMMAND_SIZE))
                         {
                            char *message = malloc(BUF_SIZE * sizeof(char));
-                           sprintf(message, "List of commands: \n - /all: list all groups \n - /grpin: list all groups you are in \n - /users: list all users \n - /history: show your history \n - /clear: clear your history \n - [message]: send [message] to everyone \n - @ [user name] [message]: send [message] to the user [user name] \n - /create [group name]: create the group [group name] \n - /join [group name]: join the group [group name] \n - /leave [group name]: leave the group [group name] \n - /leave: leave all groups \n - /delete [group name]: delete the group [group name] \n - /send [group name] [message]: send [message] to the group [group name] \n - /help: show this message \n");
+                           sprintf(message, "List of commands: \n - /all: list all groups \n - /grpin: list all groups you are in \n - /users: list all users \n - /history: show your history \n - /clear: clear your history \n - [message]: send [message] to everyone \n - @ [user name] [message]: send [message] to the user [user name] \n - /create [group name]: create the group [group name] \n - /join [group name]: join the group [group name] \n - /leave [group name]: leave the group [group name] \n - /leave all: leave all groups \n - /delete [group name]: delete the group [group name] \n - /send [group name] [message]: send [message] to the group [group name] \n - /help: show this message \n");
                            write_client(clients[i].sock, message);
                            free(message);
                         }
@@ -458,7 +475,7 @@ static void send_message_to_one_friend(Client *clients, char *receiver, Client s
       if (strcmp(receiver, clients[i].name) == 0)
       {
          char *date = date_heure();
-         sprintf(message, PURPLE"Private message from %s at %s : %s"NORMAL, sender.name, date, message);
+         sprintf(message, PURPLE"Private message from %s at %s : %s"NORMAL, sender.name, date, buffer);
          free(date);
          write_client(clients[i].sock, message);
          save_message(&clients[i], message);
@@ -626,30 +643,55 @@ static Group *join_group(Group *groups, char *name, Client *client)
 
 static Group *leave_group(Group *groups, char *name, Client *pclient)
 {
+   //check if pclient is in the group
+   int in = 0;
    for (int i = 0; i < MAX_GROUPS; i++)
    {
       if (!strcmp(groups[i].name, name))
       {
-         // find elem to remove
-         int *pindex = &groups[i].subscribers_count;
-         int indexSub = NULL;
-         for (int j = 0; j < MAX_CLIENTS; j++)
+         for (int j = 0; j < groups[i].subscribers_count; j++)
          {
-            if (pclient->sock == groups[i].subscribers[j].sock)
+            if (!strcmp(groups[i].subscribers[j].name, pclient->name))
             {
-               indexSub = j;
+               in = 1;
                break;
             }
          }
-         // move elements on top of removed ele to left until we get a soc = 0
-         for (int j = indexSub; j < MAX_CLIENTS - 1; j++)
+      }
+   }
+   
+   if(in==0) {
+      char *message = (char *)malloc(BUF_SIZE * sizeof(char));
+      sprintf(message, RED"You are not in group: %s."NORMAL, name);
+      write_client(pclient->sock, message);
+      free(message);
+      return NULL;
+   } else {
+      for (int i = 0; i < MAX_GROUPS; i++)
+      {
+         if (!strcmp(groups[i].name, name))
          {
-            groups[i].subscribers[j] = groups[i].subscribers[j + 1];
-            if (groups[i].subscribers[j + 1].sock == 0)
-               break;
+            // find elem to remove
+            int *pindex = &groups[i].subscribers_count;
+            int indexSub = NULL;
+            for (int j = 0; j < MAX_CLIENTS; j++)
+            {
+               if (pclient->sock == groups[i].subscribers[j].sock)
+               {
+                  indexSub = j;
+                  break;
+               }
+            }
+            // move elements on top of removed ele to left until we get a soc = 0
+            for (int j = indexSub; j < MAX_CLIENTS - 1; j++)
+            {
+               groups[i].subscribers[j] = groups[i].subscribers[j + 1];
+               if (groups[i].subscribers[j + 1].sock == 0)
+                  break;
+            }
+            *pindex = *pindex - 1;
+            return &groups[i];
          }
-         *pindex = *pindex - 1;
-         return &groups[i];
       }
    }
    return NULL;
@@ -714,6 +756,7 @@ static void clear_history_client(Client *pclient)
    fprintf(pclient->historique, "\0");
    free(nomFichier);
    fclose(pclient->historique);
+   write_client(pclient->sock, "Your history is cleared. \n");
 }
 
 static Group *leave_all_groups(Group *groups, Client *pclient)
@@ -733,7 +776,7 @@ static Group *leave_all_groups(Group *groups, Client *pclient)
    return groupIn;
 }
 
-static void delete_group(Group *groups, char *groupName, Client client)
+static int delete_group(Group *groups, char *groupName, Client client)
 {
    for (int i = 0; i < MAX_GROUPS; i++)
    {
@@ -745,7 +788,7 @@ static void delete_group(Group *groups, char *groupName, Client client)
             sprintf(message, RED"You can't delete the group: %s. Only the group creator can delete it."NORMAL, groups[i].name);
             write_client(client.sock, message);
             free(message);
-            return;
+            return 1;
          }
          // parcourir subscribers et les supprimer du groupe
          for (int j = 0; j < MAX_CLIENTS; j++)
@@ -766,7 +809,7 @@ static void delete_group(Group *groups, char *groupName, Client client)
          sprintf(message, GREEN"Group: %s deleted successfully."NORMAL, groupName);
          write_client(client.sock, message);
          free(message);
-         return;
+         return 0;
       }
    }
 
@@ -774,6 +817,7 @@ static void delete_group(Group *groups, char *groupName, Client client)
    sprintf(message, RED"Group: %s doesn't exist."NORMAL, groupName);
    write_client(client.sock, message);
    free(message);
+   return 1;
 }
 
 void welcome(Client *clients, int actual) {
