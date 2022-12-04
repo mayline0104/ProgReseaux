@@ -36,6 +36,13 @@ typedef struct in_addr IN_ADDR;
 #define GROUP_NAME_SIZE 10
 #define COMMAND_SIZE 7
 
+#define RED "\033[31m"
+#define GREEN "\033[32m"
+#define PURPLE "\033[35m"
+#define CYAN "\033[36m"
+#define YELLOW "\033[33m"
+#define NORMAL "\033[0m"
+
 #include "client2.h"
 
 typedef struct
@@ -54,7 +61,7 @@ static void end_connection(int sock);
 static int read_client(SOCKET sock, char *buffer);
 static void write_client(SOCKET sock, const char *buffer);
 static void send_message_to_all_clients(Client *clients, Client client, int actual, const char *buffer, char from_server);
-static void send_message_to_one_friend(Client *clients, char *receiver, Client sender, int actual, const char *buffer, char from_server);
+static void send_message_to_one_friend(Client *clients, char *receiver, Client sender, int actual, const char *buffer);
 static void remove_client(Client *clients, int to_remove, int *actual);
 static void clear_clients(Client *clients, int actual);
 static void display_users(Client client, Client *clients, int actual); 

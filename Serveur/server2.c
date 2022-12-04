@@ -108,7 +108,7 @@ static void app(void)
          while (exist == 1)
          {
             // if it does, ask for a new name
-            write_client(csock, "This name already exists, please choose another one: ");
+            write_client(csock, RED"This name already exists, please choose another one: "NORMAL);
             read_client(csock, buffer);
             exist = 0;
             for (int i = 0; i < actual; i++)
@@ -140,9 +140,8 @@ static void app(void)
                {
                   closesocket(clients[i].sock);
                   remove_client(clients, i, &actual);
-                  printf("Client %s disconnected at %s.\n\r", client.name, date_heure());
-                  strncpy(buffer, client.name, BUF_SIZE - 1);
-                  strncat(buffer, " disconnected !", BUF_SIZE - strlen(buffer) - 1);
+                  printf(RED"Client %s disconnected at %s.\n\r"NORMAL, client.name, date_heure());
+                  sprintf(buffer, RED"Client %s disconnected !\n"NORMAL, client.name);
                   send_message_to_all_clients(clients, client, actual, buffer, 1);
                }
                else
@@ -165,7 +164,7 @@ static void app(void)
                         message[j - (strlen(name) + 2)] = buffer[j];
                      }
                      message[j - (strlen(name) + 2)] = 0;
-                     send_message_to_one_friend(clients, name, client, actual, message, 0);
+                     send_message_to_one_friend(clients, name, client, actual, message);
                   }
                   else
                   {
@@ -202,15 +201,10 @@ static void app(void)
                            char *message = (char *)malloc(BUF_SIZE * sizeof(char));
                            if (pgroup != NULL)
                            {
-                              sprintf(message, "joined group: %s successfully", groupName);
+                              sprintf(message, GREEN"Joined group: %s successfully."NORMAL, groupName);
                               write_client(clients[i].sock, message);
-                              sprintf(message, "[group: %s] %s: [joined group]", groupName, clients[i].name);
+                              sprintf(message, GREEN"[group: %s] %s: [joined group]."NORMAL, groupName, clients[i].name);
                               send_message_to_all_clients(pgroup->subscribers, clients[i], pgroup->subscribers_count, message, 1);
-                           }
-                           else
-                           {
-                              sprintf(message, "Can't find group: %s, try to create new group with /create", groupName);
-                              write_client(clients[i].sock, message);
                            }
                            free(message);
                         }
@@ -233,13 +227,13 @@ static void app(void)
                               {
                                  if (strcmp(pgroup_list[k].name, "\0"))
                                  {
-                                    sprintf(message, "left group: %s successfully", pgroup_list[k].name);
+                                    sprintf(message, GREEN"Left group: %s successfully."NORMAL, pgroup_list[k].name);
                                     write_client(clients[i].sock, message);
-                                    sprintf(message, "[group: %s] %s: [left group]", pgroup_list[k].name, clients[i].name);
+                                    sprintf(message, RED"[group: %s] %s: [left group]."NORMAL, pgroup_list[k].name, clients[i].name);
                                     send_message_to_all_clients(pgroup_list[k].subscribers, clients[i], pgroup_list[k].subscribers_count, message, 1);
                                  }
                               }
-                              sprintf(message, "Left all groups successfully");
+                              sprintf(message, GREEN"Left all groups successfully"NORMAL);
                               write_client(clients[i].sock, message);
                               free(pgroup_list);
                               free(message);
@@ -251,15 +245,14 @@ static void app(void)
                               char *message = (char *)malloc(BUF_SIZE * sizeof(char));
                               if (pgroup != NULL)
                               {
-                                 sprintf(message, "Left group: %s successfully", groupName);
-
+                                 sprintf(message, GREEN"Left group: %s successfully"NORMAL, groupName);
                                  write_client(clients[i].sock, message);
-                                 sprintf(message, "[group: %s] %s: [left group]", groupName, clients[i].name);
+                                 sprintf(message, RED"[group: %s] %s: [left group]"NORMAL, groupName, clients[i].name);
                                  send_message_to_all_clients(pgroup->subscribers, clients[i], pgroup->subscribers_count, message, 1);
                               }
                               else
                               {
-                                 sprintf(message, "You can't leave group %s because it is not found.", groupName);
+                                 sprintf(message, RED"You can't leave group %s because it is not found."NORMAL, groupName);
                               }
                               free(message);
                            }
@@ -282,28 +275,46 @@ static void app(void)
                                  break;
                               }
                            }
-                           Client *pClient = &(clients[i]);
-                           strcpy(message, buffer + j + 1 + strlen(groupName) + 1);
-                           char *messageToSend = malloc(BUF_SIZE * sizeof(char));
-                           sprintf(messageToSend, "[group: %s] %s: %s", groupName, clients[i].name, message);
-                           for (int k = 0; k < MAX_GROUPS; k++)
-                           {
-                              if (!strcmp(groups[k].name, groupName))
-                              {
-                                 Client *psubscriber = &groups[k].subscribers;
-                                 for (int l = 0; l < MAX_CLIENTS; l++)
-                                 {
-                                    if (!strcmp((psubscriber + l)->name, clients[i].name))
-                                    {
-                                       send_message_to_all_clients(groups[k].subscribers, clients[i], groups[k].subscribers_count, messageToSend, 1);
-                                       break;
-                                    }
-                                 }
-
-                                 break;
-                              }
+                           if(groupName[0]=='\0'){
+                              char *message = (char *)malloc(BUF_SIZE * sizeof(char));
+                              sprintf(message, PURPLE"Please enter a group name"NORMAL);
+                              write_client(clients[i].sock, message);
+                              free(message);
                            }
-                           free(messageToSend);
+                           else {
+                              Client *pClient = &(clients[i]);
+                              strcpy(message, buffer + j + 1 + strlen(groupName) + 1);
+                              char *messageToSend = malloc(BUF_SIZE * sizeof(char));
+                              sprintf(messageToSend, "[group: %s] %s: %s", groupName, clients[i].name, message);
+                              int exist = 0;
+                              for (int k = 0; k < MAX_GROUPS; k++)
+                              {
+                                 if (!strcmp(groups[k].name, groupName))
+                                 {
+                                    exist = 1;
+                                    Client *psubscriber = &groups[k].subscribers;
+                                    for (int l = 0; l < MAX_CLIENTS; l++)
+                                    {
+                                       if (!strcmp((psubscriber + l)->name, clients[i].name))
+                                       {
+                                          send_message_to_all_clients(groups[k].subscribers, clients[i], groups[k].subscribers_count, messageToSend, 1);
+                                          break;
+                                       }
+                                    }
+
+                                    break;
+                                 }
+                              }
+                              if (exist == 0)
+                              {
+                                 char *message = (char *)malloc(BUF_SIZE * sizeof(char));
+                                 sprintf(message, RED"Group %s does not exist. Try to create it with /create."NORMAL, groupName);
+                                 write_client(clients[i].sock, message);
+                                 free(message);
+                              }
+                              free(messageToSend);
+                           }
+                           
                         }
                         // display all groups
                         else if (!strncmp(command, "/all", COMMAND_SIZE - 3))
@@ -437,7 +448,7 @@ static void send_message_to_all_clients(Client *clients, Client sender, int actu
    save_message(&sender, message); 
 }
 
-static void send_message_to_one_friend(Client *clients, char *receiver, Client sender, int actual, const char *buffer, char from_server)
+static void send_message_to_one_friend(Client *clients, char *receiver, Client sender, int actual, const char *buffer)
 {
    int i = 0;
    char message[BUF_SIZE];
@@ -446,13 +457,9 @@ static void send_message_to_one_friend(Client *clients, char *receiver, Client s
    {
       if (strcmp(receiver, clients[i].name) == 0)
       {
-         if (from_server == 0)
-         {
-            char *date = date_heure();
-            sprintf(message, "Private message from %s at %s : ", sender.name, date);
-            free(date);
-         }
-         strncat(message, buffer, sizeof message - strlen(message) - 1);
+         char *date = date_heure();
+         sprintf(message, PURPLE"Private message from %s at %s : %s"NORMAL, sender.name, date, message);
+         free(date);
          write_client(clients[i].sock, message);
          save_message(&clients[i], message);
          save_message(&sender, message);
@@ -529,7 +536,7 @@ static void display_users(Client client, Client *clients, int actual)
    {
       if (!strcmp(client.name, clients[i].name))
       {
-         sprintf(message, "- %s(You) \n", clients[i].name);
+         sprintf(message, YELLOW"- %s(You) \n"NORMAL, clients[i].name);
          write_client(client.sock, message);
       }
       else
@@ -543,12 +550,20 @@ static void display_users(Client client, Client *clients, int actual)
 
 static void create_group(Group *groups, char *name, int *pactualGroup, Client *client)
 {
+   if (name[0] == '\0')
+   {
+      char *message = (char *)malloc(BUF_SIZE * sizeof(char));
+      sprintf(message, CYAN"Please enter a group name.\n"NORMAL);
+      write_client(client->sock, message);
+      free(message);
+      return;
+   }
    for (int i = 0; i < *pactualGroup; i++)
    {
       if (strcmp(groups[i].name, name) == 0)
       {
          char *message = (char *)malloc(BUF_SIZE * sizeof(char));
-         sprintf(message, "Group: %s already exists. \n", name);
+         sprintf(message, RED"Group: %s already exists. \n"NORMAL, name);
          write_client(client->sock, message);
          free(message);
          return;
@@ -561,15 +576,23 @@ static void create_group(Group *groups, char *name, int *pactualGroup, Client *c
    groupCreated.subscribers_count = 0;
    groups[*pactualGroup] = groupCreated;
    *pactualGroup = *pactualGroup + 1;
-   printf("Group %s created successfully.", groupCreated.name);
+   printf(GREEN"Group %s created successfully."NORMAL, groupCreated.name);
    char *message = (char *)malloc(BUF_SIZE * sizeof(char));
-   sprintf(message, "Group: %s is created successfully", groups[*pactualGroup - 1].name);
+   sprintf(message, GREEN"Group: %s is created successfully."NORMAL, groups[*pactualGroup - 1].name);
    write_client(client->sock, message);
    free(message);
 }
 
 static Group *join_group(Group *groups, char *name, Client *client)
 {
+   if (name[0] == '\0')
+   {
+      char *message = (char *)malloc(BUF_SIZE * sizeof(char));
+      sprintf(message, CYAN"Please enter a group name.\n"NORMAL);
+      write_client(client->sock, message);
+      free(message);
+      return;
+   }
    for (int i = 0; i < MAX_GROUPS; i++)
    {
       if (!strcmp(groups[i].name, name))
@@ -579,10 +602,10 @@ static Group *join_group(Group *groups, char *name, Client *client)
             if (!strcmp(groups[i].subscribers[j].name, client->name))
             {
                char *message = (char *)malloc(BUF_SIZE * sizeof(char));
-               sprintf(message, "You are already in group: %s \n", name);
+               sprintf(message, "You are already in group: %s. \n", name);
                write_client(client->sock, message);
                free(message);
-               return;
+               return NULL;
             }
          }
          int *pindex = &groups[i].subscribers_count;
@@ -594,6 +617,10 @@ static Group *join_group(Group *groups, char *name, Client *client)
          return &groups[i];
       }
    }
+   char *message = (char *)malloc(BUF_SIZE * sizeof(char));
+   sprintf(message, RED"Can't find group: %s, try to create new group with /create."NORMAL, name);
+   write_client(client->sock, message);
+   free(message);
    return NULL;
 }
 
@@ -667,7 +694,7 @@ static void show_history_client(Client *pclient)
       clear_history_client(pclient);
       pclient->historique = fopen(nomFichier, "r");
    }
-   write_client(pclient->sock, "votre historique: \n");
+   write_client(pclient->sock, "Your history : \n");
    while ((read = getline(&line, &len, pclient->historique)) != -1)
    {
       strcat(line, "\n");
@@ -715,7 +742,7 @@ static void delete_group(Group *groups, char *groupName, Client client)
          if (strcmp(groups[i].creator, client.name))
          {
             char *message = malloc(BUF_SIZE * sizeof(char));
-            sprintf(message, "You can't delete the group: %s. Only the group creator can delete it.", groups[i].name);
+            sprintf(message, RED"You can't delete the group: %s. Only the group creator can delete it."NORMAL, groups[i].name);
             write_client(client.sock, message);
             free(message);
             return;
@@ -736,7 +763,7 @@ static void delete_group(Group *groups, char *groupName, Client client)
                break;
          }
          char *message = (char *)malloc(BUF_SIZE * sizeof(char));
-         sprintf(message, "group: %s deleted successfully.", groupName);
+         sprintf(message, GREEN"Group: %s deleted successfully."NORMAL, groupName);
          write_client(client.sock, message);
          free(message);
          return;
@@ -744,25 +771,25 @@ static void delete_group(Group *groups, char *groupName, Client client)
    }
 
    char *message = (char *)malloc(BUF_SIZE * sizeof(char));
-   sprintf(message, "group: %s doesn't exist.", groupName);
+   sprintf(message, RED"Group: %s doesn't exist."NORMAL, groupName);
    write_client(client.sock, message);
    free(message);
 }
 
 void welcome(Client *clients, int actual) {
    char *message = malloc(BUF_SIZE * sizeof(char));
-   sprintf(message, "Welcome %s, you are connected to the server.\n", clients[actual-1].name);
+   sprintf(message, YELLOW"Welcome %s, you are connected to the server.\n"NORMAL, clients[actual-1].name);
    write_client(clients[actual-1].sock, message);
    free(message);
    for(int i = 0; i < actual; i++) {
       if(clients[i].sock != clients[actual-1].sock) {
          char *message = malloc(BUF_SIZE * sizeof(char));
-         sprintf(message, "%s %s is connected to the server.\n", date_heure(), clients[actual-1].name);
+         sprintf(message, GREEN"%s %s is connected to the server.\n"NORMAL, date_heure(), clients[actual-1].name);
          write_client(clients[i].sock, message);
          free(message);
       }
    }
-   printf("Client %s connected to the server at %s.\n", clients[actual-1].name, date_heure());
+   printf(GREEN"Client %s connected to the server at %s.\n"NORMAL, clients[actual-1].name, date_heure());
 }
 
 int main(int argc, char **argv)
