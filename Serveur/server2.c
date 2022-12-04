@@ -229,7 +229,7 @@ static void app(void)
                            else if(!strncmp(command, "/leave",COMMAND_SIZE - 1)) {
                               char groupName[GROUP_NAME_SIZE]; 
                               int j = 0;
-                              for(j = 1; j < strlen(command) && buffer[j] != ' '; j++)
+                              for(j = 1; j < BUF_SIZE && buffer[j] != ' '; j++)
                                {}
                               strncpy(groupName, buffer + j + 1, GROUP_NAME_SIZE);
                               Client *pClient = &(clients[i]);
