@@ -57,7 +57,7 @@ static void send_message_to_all_clients(Client *clients, Client client, int actu
 static void send_message_to_one_friend(Client *clients, char *receiver, Client sender, int actual, const char *buffer, char from_server);
 static void remove_client(Client *clients, int to_remove, int *actual);
 static void clear_clients(Client *clients, int actual);
-static void display_users(SOCKET sock, Client *clients, int actual); 
+static void display_users(Client client, Client *clients, int actual); 
 static char *date_heure(void);
 static void create_group(Group *groups, char *name, int *pactualGroup, Client *creator);
 static Group *join_group(Group *groups, char* name, Client *pclient);
@@ -67,5 +67,6 @@ static void clear_history_client(Client *pclient);
 static Group *leave_all_groups(Group *groups, Client *pclient);
 static void delete_group(Group *groups, char *groupName, Client client);
 static void show_history_client(Client *pclient); 
+void welcome(Client *clients, int actual);
 
 #endif /* guard */
