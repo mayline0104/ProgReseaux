@@ -239,7 +239,7 @@ static void app(void)
                                     send_message_to_all_clients(pgroup_list[k].subscribers, clients[i], pgroup_list[k].subscribers_count, message, 1);
                                  }
                               }
-                              sprintf(message, "left all groups successfully");
+                              sprintf(message, "Left all groups successfully");
                               write_client(clients[i].sock, message);
                               free(pgroup_list);
                               free(message);
@@ -251,14 +251,15 @@ static void app(void)
                               char *message = (char *)malloc(BUF_SIZE * sizeof(char));
                               if (pgroup != NULL)
                               {
-                                 sprintf(message, "left group: %s successfully", groupName);
+                                 sprintf(message, "Left group: %s successfully", groupName);
+
                                  write_client(clients[i].sock, message);
                                  sprintf(message, "[group: %s] %s: [left group]", groupName, clients[i].name);
                                  send_message_to_all_clients(pgroup->subscribers, clients[i], pgroup->subscribers_count, message, 1);
                               }
                               else
                               {
-                                 sprintf(message, "can't leave group %s because it is not found.", groupName);
+                                 sprintf(message, "You can't leave group %s because it is not found.", groupName);
                               }
                               free(message);
                            }
@@ -433,6 +434,7 @@ static void send_message_to_all_clients(Client *clients, Client sender, int actu
       }
       save_message(&clients[i], message);
    }
+   save_message(&sender, message); 
 }
 
 static void send_message_to_one_friend(Client *clients, char *receiver, Client sender, int actual, const char *buffer, char from_server)
