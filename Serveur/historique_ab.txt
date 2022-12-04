@@ -1,0 +1,55 @@
+04/12/2022 13:22 cd : hello mate 
+ 
+Private message from cd at 04/12/2022 15:02  :coucou 
+Private message from cd at 04/12/2022 15:02  :how are you ? 
+04/12/2022 17:19 cd : 			 
+04/12/2022 17:20 [group: groupe1] ab: [joined group] 
+04/12/2022 17:20 [group: groupe1] ab: [joined group] 
+04/12/2022 17:21 ab disconnected ! 
+ 
+ 
+04/12/2022 17:36 ab disconnected ! 
+04/12/2022 17:36 [group: eg] ab: [joined group] 
+04/12/2022 17:36 [group: eg] ab: [joined group] 
+04/12/2022 17:37 [group: eg] cd: hello 
+04/12/2022 17:37 [group: eg] cd: hello 
+04/12/2022 17:38 ab disconnected ! 
+04/12/2022 17:38 [group: a] ab: [joined group] 
+04/12/2022 17:38 [group: a] ab: [joined group] 
+04/12/2022 17:38 [group: a] cd: coucou 
+04/12/2022 17:39 ab disconnected ! 
+04/12/2022 17:40 [group: group] ab: [joined group] 
+04/12/2022 17:40 [group: group] ab: [joined group] 
+04/12/2022 17:40 [group: group] ab: a 
+04/12/2022 17:40 [group: group] ab: a 
+04/12/2022 17:42 ab disconnected ! 
+ 
+ 
+04/12/2022 17:51 ab disconnected ! 
+04/12/2022 17:52 [31mClient cd disconnected.
+[0m 
+ 
+ 
+04/12/2022 18:21 [31mClient ab disconnected !
+[0m 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 

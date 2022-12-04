@@ -1,0 +1,39 @@
+ 
+ 
+ 
+ 
+ 
+ 
+[35mPrivate message from ab at 04/12/2022 19:57  : [35mPrivate message from ab at 04/12/2022 19:57  : [0m 
+[35mPrivate message from cd at 04/12/2022 19:57  : [35mPrivate message from cd at 04/12/2022 19:57  : [35mPrivate message from ab at 04/12/2022 19:57  : [0m[0m 
+04/12/2022 19:57 [31mClient cd disconnected !
+[0m 
+ 
+[35mPrivate message from cd at 04/12/2022 19:58  : coucou[0m 
+04/12/2022 20:00 [31mClient ab disconnected !
+[0m 
+[35mPrivate message from cd at 04/12/2022 20:00  : coucou[0m 
+04/12/2022 20:01 cd : hello 
+04/12/2022 20:02 [32m[group: gr1] ab: [joined group].[0m 
+04/12/2022 20:02 [32m[group: gr1] ab: [joined group].[0m 
+04/12/2022 20:02 [group: gr1] ab: coucou 
+04/12/2022 20:02 [group: gr1] ab: coucou 
+04/12/2022 20:02 [group: gr1] cd: ça va ? 
+04/12/2022 20:08 [31mClient cd disconnected !
+[0m 
+ 
+04/12/2022 20:09 [32m[group: gr1] ab: [joined group].[0m 
+04/12/2022 20:09 [32m[group: gr1] ab: [joined group].[0m 
+04/12/2022 20:09 [group: gr1] cd: coucou 
+04/12/2022 20:09 [31m[group: gr1] cd: [left group].[0m 
+04/12/2022 20:12 [31mClient cd disconnected !
+[0m 
+ 
+04/12/2022 20:16 [31mClient ab disconnected !
+[0m 
+ 
+ 
+ 
+ 
+ 
+ 
